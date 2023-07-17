@@ -2,9 +2,11 @@ const Scene = require("Scene");
 const Time = require("Time");
 const TouchGestures = require("TouchGestures");
 const Diagnostics = require("Diagnostics");
+const Animation = require("Animation");
+const Reactive = require("Reactive");
+const Materials = require("Materials");
 
 let planes = [];
-
 let currentPlaneIndex = 0;
 
 (async function () {
@@ -47,4 +49,38 @@ let currentPlaneIndex = 0;
 
     Diagnostics.log("Current visible plane: " + currentPlaneIndex);
   });
+
+  const [emitter, material] = await Promise.all([
+    Scene.root.findFirst("emitter0"),
+    Materials.findFirst("material4"),
+  ]);
+
+  emitter.material = material;
+
+  emitter.lifetimeSeconds = 2;
+
+  emitter.birthrate = 3;
+  emitter.birthrateDelta = 0.5;
+
+  emitter.scale = 0.001;
+  emitter.scaleDelta = 0.5;
+
+  const sizeSampler = Animation.samplers.linear(0.001, 0.01);
+  emitter.sizeModifier = sizeSampler;
+
+  const samplerX = Animation.samplers.polybezier({
+    keyframes: [0, 0.1, 0, -0.1, 0],
+    knots: [0, 1, 2, 3, 4],
+  });
+  const samplerY = Animation.samplers.polybezier({
+    keyframes: [0.1, 0, -0.1, 0, 0.1],
+    knots: [0, 1, 2, 3, 4],
+  });
+  const samplerZ = Animation.samplers.polybezier({
+    keyframes: [-0.05, 0.05, -0.05, 0.05, -0.05],
+    knots: [0, 1, 2, 3, 4],
+  });
+
+  emitter.positionModifier = [samplerX, samplerY, samplerZ];
+  emitter.velocityModifier = [samplerX, samplerY, samplerZ];
 })();
